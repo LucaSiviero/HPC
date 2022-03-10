@@ -5,7 +5,7 @@ Parallel dot product program. We start with two vectors, A and B. The result is 
 #include <chrono>
 #include <thread>
 #include <omp.h>
-#define SIZE 8192
+#define SIZE 500000
 using namespace std;
 
 int A[SIZE], B[SIZE], threads, size, iterations;

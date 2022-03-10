@@ -19,21 +19,22 @@ void parallel_mult(int partition) {
         for (int i = 0; i < matrix_size; i++) {
             for(int j = 0; j < matrix_size; j++) {
                 C[i][j] += A[i][k] * B[k][j];
+                //cout << "The element in position " << i << "-" << j << " is: " << C[i][j] << endl;
             }
             //Debugging instruction
-            //cout << "The element in position " << i << "-" << j << " is: " << C[i][j] << endl;
+            
         }
     }
     //Printing the matrix for each processor.
-    /*
-    #pragma omp parallel for
+    
+    
     for (int i = last_index; i < last_index + partition; i++) {
         for (int j = last_index; j < last_index + partition; j++) {
             cout << "|" << C[i][j] << "|"; 
         }
         cout << endl;
     }
-    */
+    
 
     last_index += partition;
 }
