@@ -10,13 +10,12 @@ using namespace std;
 
 int A[SIZE], B[SIZE], threads, size, iterations;
 
-int dot_product() {
+unsigned long int dot_product() {
     unsigned long int total = 0;
     omp_set_num_threads(threads);
 
     #pragma omp parallel for reduction(+: total)
     for (int i = 0; i < size; i++) {
-        //#pragma omp critical
         total += A[i] * B[i];
     }
     return total;
