@@ -41,7 +41,6 @@ int main() {
     cout << "Time difference = " << chrono::duration_cast<chrono::milliseconds> (end - begin).count() << "[ms]" << endl;       
     cout << "Time difference = " << chrono::duration_cast<chrono::seconds> (end - begin).count() << "[s]" << endl << endl;
 
-
     cout << "Now calculating the reduction manually storing the partial result in a padded array." << endl << endl;
 
     begin = chrono::steady_clock::now();
