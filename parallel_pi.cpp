@@ -27,7 +27,7 @@ int main() {
 
     double result;
 
-    cout << "Calculating the reduction manually without a padded array" << endl << endl;
+    cout << "Calculating the reduction manually without a padded array" << endl;
 
     chrono::steady_clock::time_point begin = chrono::steady_clock::now();
     result = calculatePi_with_partial_sums_no_padding(10000000);
@@ -38,10 +38,9 @@ int main() {
 
     cout << "Time difference = " << chrono::duration_cast<chrono::microseconds>(end - begin).count() << "[µs]" << endl;
     cout << "Time difference = " << chrono::duration_cast<chrono::nanoseconds> (end - begin).count() << "[ns]" << endl;
-    cout << "Time difference = " << chrono::duration_cast<chrono::milliseconds> (end - begin).count() << "[ms]" << endl;       
-    cout << "Time difference = " << chrono::duration_cast<chrono::seconds> (end - begin).count() << "[s]" << endl << endl;
+    cout << "Time difference = " << chrono::duration_cast<chrono::milliseconds> (end - begin).count() << "[ms]" << endl << endl;       
 
-    cout << "Now calculating the reduction manually storing the partial result in a padded array." << endl << endl;
+    cout << "Now calculating the reduction manually storing the partial result in a padded array." << endl ;
 
     begin = chrono::steady_clock::now();
     result = calculatePi_with_partial_sums_padding(10000000);
@@ -52,10 +51,9 @@ int main() {
 
     cout << "Time difference = " << chrono::duration_cast<chrono::microseconds>(end - begin).count() << "[µs]" << endl;
     cout << "Time difference = " << chrono::duration_cast<chrono::nanoseconds> (end - begin).count() << "[ns]" << endl;
-    cout << "Time difference = " << chrono::duration_cast<chrono::milliseconds> (end - begin).count() << "[ms]" << endl;       
-    cout << "Time difference = " << chrono::duration_cast<chrono::seconds> (end - begin).count() << "[s]" << endl << endl;
+    cout << "Time difference = " << chrono::duration_cast<chrono::milliseconds> (end - begin).count() << "[ms]" << endl << endl;       
 
-    cout << "Now calculating the reduction with the openMP directive." << endl << endl;
+    cout << "Now calculating the reduction with the openMP directive." << endl;
 
     begin = chrono::steady_clock::now();
     result = calculatePi_with_reduction(10000000);
@@ -66,10 +64,9 @@ int main() {
 
     cout << "Time difference = " << chrono::duration_cast<chrono::microseconds>(end - begin).count() << "[µs]" << endl;
     cout << "Time difference = " << chrono::duration_cast<chrono::nanoseconds> (end - begin).count() << "[ns]" << endl;
-    cout << "Time difference = " << chrono::duration_cast<chrono::milliseconds> (end - begin).count() << "[ms]" << endl;       
-    cout << "Time difference = " << chrono::duration_cast<chrono::seconds> (end - begin).count() << "[s]" << endl << endl;
+    cout << "Time difference = " << chrono::duration_cast<chrono::milliseconds> (end - begin).count() << "[ms]" << endl << endl;       
 
-    cout << "Now calculating the reduction with a critical section" << endl << endl;
+    cout << "Now calculating the reduction with a critical section" << endl;
 
     begin = chrono::steady_clock::now();
     result = calculatePi_with_critical_section(10000000);
@@ -80,8 +77,7 @@ int main() {
 
     cout << "Time difference = " << chrono::duration_cast<chrono::microseconds>(end - begin).count() << "[µs]" << endl;
     cout << "Time difference = " << chrono::duration_cast<chrono::nanoseconds> (end - begin).count() << "[ns]" << endl;
-    cout << "Time difference = " << chrono::duration_cast<chrono::milliseconds> (end - begin).count() << "[ms]" << endl;       
-    cout << "Time difference = " << chrono::duration_cast<chrono::seconds> (end - begin).count() << "[s]" << endl << endl;
+    cout << "Time difference = " << chrono::duration_cast<chrono::milliseconds> (end - begin).count() << "[ms]" << endl << endl;       
 
     return 0;
 }
