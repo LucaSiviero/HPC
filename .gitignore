@@ -1,5 +1,5 @@
 /.vscode/*
-/bin/*
+/exercises/bin/*
 mergesort.cpp
 .gitignore
 recursive_matrix_mult.cpp
