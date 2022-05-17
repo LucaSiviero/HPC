@@ -1,2 +1,6 @@
 /.vscode/*
 /bin/*
+mergesort.cpp
+.gitignore
+recursive_matrix_mult.cpp
+mergesort2.cpp
