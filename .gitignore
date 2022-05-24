@@ -4,5 +4,5 @@ mergesort.cpp
 .gitignore
 recursive_matrix_mult.cpp
 mergesort2.cpp
-/project/src/run_container.sh
-/project/nextdbscan-exa/Makefile
+project/src/run_container.sh
+project/nextdbscan-exa-master/Makefile
