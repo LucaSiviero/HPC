@@ -48,8 +48,8 @@ void print_cuda_memory_usage() {
 #endif
 
 void data_process::get_result_meta(int &cores, int &noise, int &clusters, int &n, magmaMPI mpi) noexcept {
-    n = n_coord;
-    auto const _m = m;
+    n = n_coord;        //Assigning number of coordinates
+    auto const _m = m;  //Assigning number of minimum points to create a cluster
     cores = exa::count_if(v_coord_nn, 0, v_coord_nn.size(), [=]
 #ifdef CUDA_ON
     __device__
@@ -333,8 +333,8 @@ void data_process::select_cores_and_process(magmaMPI mpi) noexcept {
 
 void data_process::select_and_process(magmaMPI mpi) noexcept {
     std::size_t million = 1000000;
-    vector_resize(v_coord_id, n_coord, 0);
-    exa::iota(v_coord_id, 0, v_coord_id.size(), 0);
+    vector_resize(v_coord_id, n_coord, 0);      //v_coord_id only contains 0 and is resized to n_coord.
+    exa::iota(v_coord_id, 0, v_coord_id.size(), 0);     //v_coord_id is filled with 0, 1, 2, ..., n_coord-1.
     std::size_t n_sample_size = 100 * million;
     if (n_total_coord < n_sample_size) {
         // A bit of padding is added at the end to counter rounding issues
@@ -345,7 +345,7 @@ void data_process::select_and_process(magmaMPI mpi) noexcept {
         std::cout << "sample size: " << n_sample_size << std::endl;
     }
 #endif
-    d_vec<int> v_id_chunk(n_sample_size, -1);
+    d_vec<int> v_id_chunk(n_sample_size, -1);   //v_id_chunk is a vector of size n_sample_size, filled with -1.
     d_vec<float> v_data_chunk(n_sample_size * n_dim);
     int node_transmit_size = magma_util::get_block_size(mpi.rank, static_cast<int>(n_sample_size), mpi.n_nodes);
     int node_transmit_offset = magma_util::get_block_offset(mpi.rank, static_cast<int>(n_sample_size), mpi.n_nodes);
@@ -363,6 +363,7 @@ void data_process::select_and_process(magmaMPI mpi) noexcept {
         exa::fill(v_id_chunk, 0, v_id_chunk.size(), -1);
         exa::fill(v_data_chunk, 0, v_data_chunk.size(), std::numeric_limits<float>::max());
         exa::fill(v_point_nn, 0, v_point_nn.size(), 0);
+        
         if (transmit_cnt + node_transmit_size <= n_coord) {
             exa::copy(v_point_id, transmit_cnt, transmit_cnt + node_transmit_size,
                     v_id_chunk, node_transmit_offset);
@@ -399,6 +400,9 @@ void data_process::process_points(d_vec<int> const &v_point_id, d_vec<float> con
     auto const _n_dim = n_dim;
     auto const _e2 = e2;
     auto const it_coord_nn = v_coord_nn.begin();
+    for (int i = 0; i < v_coord_nn.size(); ++i) {
+        std::cout << "v_coord_nn: " << i << " " << v_coord_nn[i] << std::endl;
+    }
     auto const _n_coord = n_coord;
     auto const _n_point = v_point_id.size();
 
@@ -452,7 +456,6 @@ void data_process::process_points(d_vec<int> const &v_point_id, d_vec<float> con
         }
 
     });
-
 
 
 }
