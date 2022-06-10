@@ -5,3 +5,4 @@ mergesort.cpp
 recursive_matrix_mult.cpp
 mergesort2.cpp
 project/nextdbscan-exa-master/Makefile
+project/src/compile.sh

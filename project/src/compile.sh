@@ -7,6 +7,6 @@ read output
 
 echo "Compiling" $file
 
-syclcc --hipsycl-targets="cuda:sm_86" $file $output
+syclcc --hipsycl-targets="cuda:sm_35" $file $output
 
 echo "Compilation finished"
