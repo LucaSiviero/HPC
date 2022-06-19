@@ -19,6 +19,12 @@ SOFTWARE.
 
 #ifndef NEXTDBSCAN20_MAGMA_EXA_CU_H
 #define NEXTDBSCAN20_MAGMA_EXA_CU_H
+/*
+Luca Siviero: Defining _ONEDPL_BACKEND_SYCL because it's written in the file that gives me error.
+*/
+#ifndef _ONEDPL_BACKEND_SYCL
+#define _ONEDPL_BACKEND_SYCL
+
 
 #include <oneapi/dpl/execution>
 #include <oneapi/dpl/algorithm>
@@ -30,12 +36,11 @@ SOFTWARE.
 #include <numeric>
 
 template <typename T> using h_vec = std::vector<T>;
-template <typename T> using d_vec = dpct::device_vector<T>;
-
+template <typename T1> using d_vector = dpct::device_vector<T1>;
 namespace exa {
 
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-    void fill(d_vec<T> &v, std::size_t const begin, std::size_t const end, T const val) noexcept {
+    void fill(d_vector<T> &v, std::size_t const begin, std::size_t const end, T const val) noexcept {
 #ifdef DEBUG_ON
         assert(begin <= end);
 #endif
@@ -45,7 +50,7 @@ namespace exa {
     }
 
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-    void iota(d_vec<T> &v, std::size_t const begin, std::size_t const end, std::size_t const startval) noexcept {
+    void iota(d_vector<T> &v, std::size_t const begin, std::size_t const end, std::size_t const startval) noexcept {
 #ifdef DEBUG_ON
         assert(begin <= end);
 #endif
@@ -55,7 +60,7 @@ namespace exa {
     }
 
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-    T reduce(d_vec<T> &v, std::size_t const begin, std::size_t const end, T const startval) noexcept {
+    T reduce(d_vector<T> &v, std::size_t const begin, std::size_t const end, T const startval) noexcept {
 #ifdef DEBUG_ON
         assert(begin <= end);
         assert((end - begin) <= (v.size() - begin));
@@ -65,17 +70,37 @@ namespace exa {
                            v.begin() + begin, v.begin() + end, startval);
     }
 
+        /*Luca Siviero: I have personally modified this function. I don't know if it actually works.
+        The thrust::advance(iter, n) function increases the iterator n times if n is positive, otherwise it decreases it.
+        */
     template <typename T, typename F, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-    std::size_t count_if(d_vec<T> &v, std::size_t const begin, std::size_t const end, F const &functor) noexcept {
+        std::size_t count_if(d_vector<T> &v, std::size_t const begin, std::size_t const end, F const &functor) noexcept {
 #ifdef DEBUG_ON
         assert(begin <= end);
 #endif
         auto iter1 = v.begin();
-        std::cout << "Before thrust::advance " << iter1 << std::endl;
-        thrust::advance(iter1, begin);
-        std::cout << "After thrust::advance " <<  iter1 << std::endl;
         auto iter2 = v.begin();
-        thrust::advance(iter2, end);
+        std::advance(iter1, begin);
+        std::advance(iter2, begin);
+        /*
+        std::cout << "Before thrust::advance " << iter1 << std::endl;
+        //thrust::advance(iter1, begin);
+        dpct::get_default_queue().submit([&](cl::sycl::handler &cgh) {
+            cgh.parallel_for(cl::sycl::nd_range<1>(cl::sycl::range<1>(begin - 0), cl::sycl::range<1>(1)),
+                             [&](cl::sycl::id<1> idx) {
+                                iter1 = idx; 
+                             });
+        });
+        std::cout << "After thrust::advance " <<  iter1 << std::endl;
+        auto iter2 = begin;
+        dpct::get_default_queue().submit([&](cl::sycl::handler &cgh) {
+            cgh.parallel_for(cl::sycl::nd_range<1>(cl::sycl::range<1>(begin - 0), cl::sycl::range<1>(1)),
+                        [&](cl::sycl::id<1> idx) {
+                        iter2 = idx;
+                });
+        });
+         */
+        //thrust::advance(iter2, end);
 //        return thrust::count_if(v.begin() + begin, v.begin() + end, functor);
         return std::count_if(oneapi::dpl::execution::make_device_policy(
                                  dpct::get_default_queue()),
@@ -83,8 +108,8 @@ namespace exa {
     }
 
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-    void exclusive_scan(d_vec<T> const &v_input, std::size_t const in_begin, std::size_t const in_end,
-            d_vec<T> &v_output, std::size_t const out_begin, T const init) noexcept {
+    void exclusive_scan(d_vector<T> const &v_input, std::size_t const in_begin, std::size_t const in_end,
+            d_vector<T> &v_output, std::size_t const out_begin, T const init) noexcept {
 #ifdef DEBUG_ON
         assert(in_begin <= in_end);
 #endif
@@ -95,8 +120,11 @@ namespace exa {
                             v_output.begin() + out_begin, init, 0);
     }
 
+        /*
+        Luca Siviero: The function has been modified by me because the v_output.resize() was using a thrust argument. More specifically, it was using the thrust::distance(v_output.begin(), it) function.
+        */
     template <typename T, typename F, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-    void copy_if(d_vec<T> &v_input, std::size_t const in_begin, std::size_t const in_end, d_vec<T> &v_output,
+    void copy_if(d_vector<T> &v_input, std::size_t const in_begin, std::size_t const in_end, d_vector<T> &v_output,
             std::size_t const out_begin, F const &functor) noexcept {
 #ifdef DEBUG_ON
         assert(in_begin <= in_end);
@@ -106,7 +134,7 @@ namespace exa {
                              dpct::get_default_queue()),
                          v_input.begin() + in_begin, v_input.begin() + in_end,
                          v_output.begin() + out_begin, functor);
-        v_output.resize(thrust::distance(v_output.begin(), it));
+        v_output.resize(v_output.begin() - it);
     }
 
     template <typename F>
@@ -144,9 +172,9 @@ namespace exa {
     }
 
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-    void lower_bound(d_vec<T> &v_input, std::size_t const in_begin, std::size_t const in_end,
-            d_vec<T> &v_value, std::size_t const value_begin, std::size_t const value_end,
-            d_vec<int> &v_output, std::size_t const out_begin, int const stride) noexcept {
+    void lower_bound(d_vector<T> &v_input, std::size_t const in_begin, std::size_t const in_end,
+            d_vector<T> &v_value, std::size_t const value_begin, std::size_t const value_end,
+            d_vector<int> &v_output, std::size_t const out_begin, int const stride) noexcept {
 #ifdef DEBUG_ON
         assert(in_begin <= in_end);
         assert(value_begin <= value_end);
@@ -170,9 +198,9 @@ namespace exa {
     }
 
     template <typename T, typename F, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-    void lower_bound(d_vec<T> &v_input, std::size_t const in_begin, std::size_t const in_end,
-            d_vec<T> &v_value, std::size_t const value_begin, std::size_t const value_end,
-            d_vec<int> &v_output, std::size_t const out_begin, int const stride, F const &functor) noexcept {
+    void lower_bound(d_vector<T> &v_input, std::size_t const in_begin, std::size_t const in_end,
+            d_vector<T> &v_value, std::size_t const value_begin, std::size_t const value_end,
+            d_vector<int> &v_output, std::size_t const out_begin, int const stride, F const &functor) noexcept {
 #ifdef DEBUG_ON
         assert(in_begin <= in_end);
         assert(value_begin <= value_end);
@@ -198,9 +226,9 @@ namespace exa {
 
 
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-    void upper_bound(d_vec<T> &v_input, std::size_t const in_begin, std::size_t const in_end,
-            d_vec<T> &v_value, std::size_t const value_begin, std::size_t const value_end,
-            d_vec<int> &v_output, std::size_t const out_begin, int const stride) noexcept {
+    void upper_bound(d_vector<T> &v_input, std::size_t const in_begin, std::size_t const in_end,
+            d_vector<T> &v_value, std::size_t const value_begin, std::size_t const value_end,
+            d_vector<int> &v_output, std::size_t const out_begin, int const stride) noexcept {
 #ifdef DEBUG_ON
         assert(in_begin <= in_end);
         assert(value_begin <= value_end);
@@ -223,9 +251,9 @@ namespace exa {
     }
 
     template <typename T, typename F, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-    void upper_bound(d_vec<T> &v_input, std::size_t const in_begin, std::size_t const in_end,
-            d_vec<T> &v_value, std::size_t const value_begin, std::size_t const value_end,
-            d_vec<int> &v_output, std::size_t const out_begin, int const stride, F const &functor) noexcept {
+    void upper_bound(d_vector<T> &v_input, std::size_t const in_begin, std::size_t const in_end,
+            d_vector<T> &v_value, std::size_t const value_begin, std::size_t const value_end,
+            d_vector<int> &v_output, std::size_t const out_begin, int const stride, F const &functor) noexcept {
 #ifdef DEBUG_ON
         assert(in_begin <= in_end);
         assert(value_begin <= value_end);
@@ -247,21 +275,24 @@ namespace exa {
             it_perm_begin, functor);
     }
 
-    template <
-        typename T, typename F,
+    /*Luca Siviero: After some trouble trying to translate the minmax_function, I found out that the function was not used. I'm going to comment it.*/
+/*
+    template <typename T, typename F,
         typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    std::pair<T, T> minmax_element(d_vec<T> &v, std::size_t const begin,
+    std::pair<T, T> minmax_element(d_vector<T> &v, std::size_t const begin,
                                    std::size_t const end,
                                    F const &functor) noexcept {
 #ifdef DEBUG_ON
         assert(begin <= end);
 #endif
         auto pair = thrust::minmax_element(v.begin() + begin, v.begin() + end, functor);
-        return thrust::make_pair(*pair.first, *pair.second);
+        auto min = thrust::min_element(v.begin() + begin, v.begin() + end, functor);
+        auto max = thrust::max_element(v.begin() + begin, v.begin() + end, functor);
+        return std::pair(*min, *max);
     }
-
+*/
     template <typename T, typename F, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-    void sort(d_vec<T> &v, std::size_t const begin, std::size_t const end, F const &functor) noexcept {
+    void sort(d_vector<T> &v, std::size_t const begin, std::size_t const end, F const &functor) noexcept {
 #ifdef DEBUG_ON
         assert(begin <= end);
         assert((end - begin) <= (v.size() - begin));
@@ -272,7 +303,7 @@ namespace exa {
     }
 
     template <typename T1, typename T2, typename F, typename std::enable_if<std::is_arithmetic<T1>::value>::type* = nullptr>
-    void unique(d_vec<T1> &v_input, d_vec<T2> &v_output, std::size_t const in_begin, std::size_t const in_end,
+    void unique(d_vector<T1> &v_input, d_vector<T2> &v_output, std::size_t const in_begin, std::size_t const in_end,
             std::size_t const out_begin, F const &functor) noexcept {
 #ifdef DEBUG_ON
         assert(in_begin <= in_end);
@@ -280,7 +311,7 @@ namespace exa {
     }
 
     template <typename T1, typename T2, typename F, typename std::enable_if<std::is_arithmetic<T1>::value>::type* = nullptr>
-    void transform(d_vec<T1> const &v_input, std::size_t const in_begin, std::size_t const in_end, d_vec<T2> &v_output,
+    void transform(d_vector<T1> const &v_input, std::size_t const in_begin, std::size_t const in_end, d_vector<T2> &v_output,
             std::size_t const out_begin, F const &functor) noexcept {
 #ifdef DEBUG_ON
         assert(in_begin <= in_end);
@@ -306,7 +337,7 @@ namespace exa {
     }
 
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-    void copy(d_vec<T> const &v_input, std::size_t const in_begin, std::size_t const in_end, d_vec<T> &v_output,
+    void copy(d_vector<T> const &v_input, std::size_t const in_begin, std::size_t const in_end, d_vector<T> &v_output,
             std::size_t const out_begin) {
         std::copy(oneapi::dpl::execution::make_device_policy(
                       dpct::get_default_queue()),
