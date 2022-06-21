@@ -1,8 +1,7 @@
 /.vscode/*
 /exercises/bin/*
 mergesort.cpp
-.gitignore
 recursive_matrix_mult.cpp
 mergesort2.cpp
-project/nextdbscan-exa-master/Makefile
 project/src/compile.sh
+project/nextdbscan-exa-master/magma_exa_sycl.h.gch
