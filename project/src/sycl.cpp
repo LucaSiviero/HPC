@@ -1,4 +1,5 @@
 #include <iostream>
+#include </opt/intel/oneapi/dpcpp-ct/latest/include/dpct/dpct.hpp>
 #include <vector>
 #include <CL/sycl.hpp>
 using namespace cl::sycl; 
@@ -32,9 +33,10 @@ namespace exa {
         }
     }
 
+    /*
     template <typename T, typename F, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
     void copy_if(std::vector<T> &v_input, std::size_t const in_begin, std::size_t const in_end, std::vector<T> &v_output,
-        std::size_t const out_begin, F functor) noexcept{
+        std::size_t const out_begin, F&& predicate) noexcept{
             queue myQueue;
             {
                 buffer<T, 1> sourceBuf { v_input.data(), range<1> { v_input.size() } };
@@ -44,7 +46,7 @@ namespace exa {
                     accessor dest { destBuf, cgh, write_only, no_init };
                     int i = 0;
                     cgh.parallel_for(range<1> (in_end - in_begin), [&](id<1> idx) {
-                        if (functor) {
+                        if (predicate(idx)) {
                             dest[i] = source[idx];
                             i++;
                         }
@@ -53,8 +55,33 @@ namespace exa {
 
             }
         }
-        
+    */
 
+    template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
+        void copy_if(std::vector<T> &v_input, std::size_t const in_begin, std::size_t const in_end, std::vector<T> &v_output,
+            std::size_t const out_begin, double _m) noexcept{
+                queue myQueue;
+                {
+                    buffer<T, 1> sourceBuf { v_input.data(), range<1> { v_input.size() } };
+                    buffer<T, 1> destBuf { v_output.data(), range<1> { v_output.size() } };
+                    myQueue.submit([&](handler &cgh){
+                        accessor source { sourceBuf, cgh, read_only, no_init };
+                        accessor dest { destBuf, cgh, write_only, no_init };
+                        int i = 0;
+                        cgh.parallel_for(range<1> (in_end - in_begin), [&](id<1> idx) {
+                            if (v_input[idx] >= _m) {
+                                v_output[i + out_begin] = v_input[idx.get(0)];
+                                i++;
+                            }
+                        });
+                    });
+
+                }
+            }
+
+        //Implement the for_each function
+        
+        
 };
 
 int main() {
@@ -70,17 +97,7 @@ int main() {
         std::cout << "data2[" << i << "] = " << data2[i] << std::endl;
     */
 
-   std::vector<double> data(100);
-   exa::sequence(data, 0, 100);
-   std::vector<double> toCopy(100);
-   exa::fill(toCopy, 0, 100, -1);
-   exa::copy_if(data, 0, 100, toCopy, 0, [=] (auto const &i) -> bool {
-        return data[i] >= 50;
-   });
 
-   for (int i = 0; i < toCopy.size(); i++){
-       std::cout << toCopy[i] << std::endl;
-   }
     
     return 0;
 }

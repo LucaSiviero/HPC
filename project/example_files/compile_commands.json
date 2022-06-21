@@ -1,0 +1,8 @@
+[
+	{
+		"command": "nvcc vector_add.cu",
+		"directory": "./",
+		"file": "vector_add.cu"
+	}
+]
+

@@ -53,7 +53,7 @@ nextdbscan::result nextdbscan::start(int const m, float const e, int const n_thr
         dp.select_cores_and_process(mpi);
     });
 
-    auto result = nextdbscan::result();
+    nextdbscan::result result = nextdbscan::result();
     magma_util::measure_duration("Collect Results: ", mpi.rank == 0, [&]() -> void {
         dp.get_result_meta(result.core_count, result.noise, result.clusters, result.n, mpi);
     });

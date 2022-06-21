@@ -25,22 +25,33 @@ __device__
 #endif
 static const int NO_CLUSTER = INT32_MAX;
 
+
 #ifdef CUDA_ON
+/*
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
 template <typename T>
 using h_vec = thrust::host_vector<T>;
 template <typename T>
 using d_vec = thrust::device_vector<T>;
+*/
 #else
 #include <vector>
 template <typename T>
 using h_vec = std::vector<T>;
+
+#include <oneapi/dpl/execution>
+#include <oneapi/dpl/algorithm>
+#include <CL/sycl.hpp>
+#include <dpct/dpct.hpp>
+#include <dpct/dpl_utils.hpp>
 template <typename T>
-using d_vec = std::vector<T>;
+using d_vec = dpct::device_vector<T>;
+template <typename T1> using d_vector = dpct::device_vector<T1>;
 #endif
 #include <cmath>
 #include "magma_mpi.h"
+#include "magma_exa_sycl.h"
 
 class data_process {
 private:
@@ -62,6 +73,13 @@ public:
         : m(m), n_dim(n_dim), n_coord(v_coord.size()/n_dim), e(e), e2(e*e), n_total_coord(n_total_coord), is_approximate(is_approximate), v_coord(v_coord) {
         allocated_bytes = n_coord * n_dim * sizeof(float);
     }
+
+#elif SYCL_ON
+    explicit data_process(h_vec<float> &v_coord, int const m, float const e, int const n_dim, int const n_total_coord, bool const is_approximate)
+        : m(m), n_dim(n_dim), n_coord(v_coord.size()/n_dim), e(e), e2(e*e), n_total_coord(n_total_coord), is_approximate(is_approximate), v_coord(v_coord) {
+        allocated_bytes = n_coord * n_dim * sizeof(float);
+    }
+
 #else
     explicit data_process(
             h_vec<float> &v_coord,

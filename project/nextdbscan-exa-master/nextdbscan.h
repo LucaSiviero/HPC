@@ -25,15 +25,20 @@ SOFTWARE.
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
 template <typename T>
-using h_vec = thrust::host_vector<T>;
+//using h_vec = thrust::host_vector<T>;
 template <typename T>
-using d_vec = thrust::device_vector<T>;
+//using d_vec = thrust::device_vector<T>;
 #else
 #include <vector>
+#include <dpct/dpct.hpp>
+#include <dpct/dpl_utils.hpp>
+#include <oneapi/dpl/execution>
+#include <oneapi/dpl/algorithm>
+#include <CL/sycl.hpp>
 template <typename T>
 using h_vec = std::vector<T>;
 template <typename T>
-using d_vec = std::vector<T>;
+using d_vec = dpct::device_vector<T>;
 #endif
 
 #include "magma_mpi.h"

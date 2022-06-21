@@ -21,10 +21,12 @@ SOFTWARE.
 #include <stack>
 #include "magma_util.h"
 #include "data_process.h"
-#ifdef OMP_ON
-#include "magma_exa_omp.h"
-#elif CUDA_ON
-#include "magma_exa_cu.h"
+//#ifdef OMP_ON
+//#include "magma_exa_omp.h"
+//#elif SYCL_ON
+//#include "magma_exa_cu.h"
+#ifdef SYCL_ON
+#include "magma_exa_sycl.h"
 #else
 #include "magma_exa.h"
 #endif
@@ -48,16 +50,17 @@ void print_cuda_memory_usage() {
 #endif
 
 void data_process::get_result_meta(int &cores, int &noise, int &clusters, int &n, magmaMPI mpi) noexcept {
+    std::cout << "Hello" << std::endl;
     n = n_coord;        //Assigning number of coordinates
     auto const _m = m;  //Assigning number of minimum points to create a cluster
-    cores = exa::count_if(v_coord_nn, 0, v_coord_nn.size(), [=]
+    cores = exa::count_if(v_coord_nn, std::size_t(0), std::size_t(v_coord_nn.size()), [=]
 #ifdef CUDA_ON
     __device__
 #endif
     (int const &v) -> bool {
         return v >= _m;
     });
-
+    std::cout << cores << " cores found" << std::endl;
     noise = exa::count_if(v_coord_cluster_index, 0, v_coord_cluster_index.size(), []
 #ifdef CUDA_ON
     __device__
@@ -150,10 +153,15 @@ void data_process::process_cores(d_vec<int> const &v_core_id, d_vec<float> const
         // Create new label ids
         exa::iota(v_cluster_label, cluster_index_begin, v_cluster_label.size(), cluster_index_begin);
         // the new label indexes
+
+        /*Luca Siviero: Changing namespace from exa::exclusive scan to std::exclusive scan.
+        
         exa::exclusive_scan(v_point_new_cluster_mark, 0, v_point_new_cluster_mark.size(), v_point_new_cluster_offset,
                 0, cluster_index_begin);
+        */
+        exa::exclusive_scan(v_point_new_cluster_mark, v_point_new_cluster_mark.begin(), v_point_new_cluster_mark.size(), v_point_new_cluster_offset, 0, cluster_index_begin);
         auto const it_point_new_cluster_offset = v_point_new_cluster_offset.begin();
-
+        
         exa::for_each(0, v_core_id.size(), [=]
 #ifdef CUDA_ON
             __device__
@@ -400,9 +408,6 @@ void data_process::process_points(d_vec<int> const &v_point_id, d_vec<float> con
     auto const _n_dim = n_dim;
     auto const _e2 = e2;
     auto const it_coord_nn = v_coord_nn.begin();
-    for (int i = 0; i < v_coord_nn.size(); ++i) {
-        std::cout << "v_coord_nn: " << i << " " << v_coord_nn[i] << std::endl;
-    }
     auto const _n_coord = n_coord;
     auto const _n_point = v_point_id.size();
 
@@ -449,8 +454,8 @@ void data_process::process_points(d_vec<int> const &v_point_id, d_vec<float> con
                     length += (p1[d] - p2[d]) * (p1[d] - p2[d]);
                 }
                 if (length <= _e2) {
-//                    it_coord_nn[i] = it_coord_nn[i] + 1;
-                    exa::atomic_add(&it_coord_nn[i], 1);
+                    it_coord_nn[i] = it_coord_nn[i] + 1;
+                    //exa::atomic_sum(&it_coord_nn[i], 1);
                 }
             }
         }
